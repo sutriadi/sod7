@@ -1,0 +1,14 @@
+
+div.slims-item {
+  margin: 10px 0;
+  padding: 10px 0;
+}
+
+div.slims-single-item .title {
+  font-weight: bold;
+}
+ 
+div.slims-single-item div.image {
+  float: left;
+  margin-right: 10px;
+}

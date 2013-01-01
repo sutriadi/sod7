@@ -1,0 +1,511 @@
+<?php
+
+/**
+ * @file
+ */
+
+/**
+ * Helper function to generate the configuration array used to server
+ * settings of SLiMS.
+ */
+function slims_conf() {
+  $_p = 'slims';
+  $conf = array(
+    'server_url' => variable_get($_p . '_server_url', 'http://localhost/slims/'),
+    'server_title' => variable_get($_p . '_server_title', 'Senayan'),
+    'server_subtitle' => variable_get($_p . '_server_subtitle', 'Open Source Library Management System'),
+    'image_thumb_size' => variable_get($_p . '_image_thumb_size', '42'),
+    'image_detail_size' => variable_get($_p . '_image_detail_size', '200'),
+  );
+  return $conf;
+}
+
+/**
+ * Helper function to generate url query
+ */
+function slims_query($type = 'page') {
+  if ($type == 'page') {
+    $query = array('p' => 'show_detail',
+      'inXML' => 'true',
+      'id' => '',
+    );
+  } else {
+    $query = array('resultXML' => 'true',
+      'search' => 'Search',
+      'gmd' => 0,
+      'colltype' => 0,
+      'location' => 0,
+      'keywords' => '',
+      'title' => '',
+      'author' => '',
+      'subject' => '',
+      'isbn' => '',
+      'page' => '',
+      'detail' => 1,
+    );    
+  }
+  return $query;
+}
+
+/**
+ * Implements of hook_menu().
+ */
+function slims_menu() {
+  $slims_conf = slims_conf();
+  $items['admin/config/slims'] = array(
+    'title' => 'SLiMS',
+    'description' => 'Configure SLiMS',
+    'page callback' => 'system_admin_menu_block_page',
+    'access arguments' => array('administer slims'),
+    'position' => 'right',
+    'weight' => -30,
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'system.admin.inc',
+    'file path' => drupal_get_path('module', 'system'),
+  );
+  $items['admin/config/slims/server'] = array(
+    'title' => 'SLiMS server settings',
+    'description' => 'Configure the settings of SLiMS server.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('slims_server_settings'),
+    'access arguments' => array('administer slims'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'slims.admin.inc',
+    'weight' => 0,
+  );
+  //~ $items['admin/config/slims/widget'] = array(
+    //~ 'title' => 'SLiMS Widget',
+    //~ 'description' => 'Configure the widgets of SLiMS.',
+    //~ 'page callback' => 'drupal_get_form',
+    //~ 'page arguments' => array('slims_widget_settings'),
+    //~ 'access arguments' => array('administer slims'),
+    //~ 'type' => MENU_NORMAL_ITEM,
+    //~ 'file' => 'slims.admin.inc',
+    //~ 'weight' => 1,
+  //~ );
+  $items['slims/search'] = array(
+    'title' => $slims_conf['server_title'],
+    'page callback' => 'slims_search',
+    'page arguments' => array(2),
+    'access arguments' => array('access slims'),
+    'access callback' => true,
+    //~ 'type' => MENU_CALLBACK,
+    'file' => 'slims.content.inc',
+  );
+  $items['slims/detail'] = array(
+    //~ 'title' => t('Record Detail'),
+    //~ 'title callback' => 'slims_item_title',
+    //~ 'title arguments' => array(2),
+    'page callback' => 'slims_item_details',
+    'page arguments' => array(2),
+    'access arguments' => array('access slims'),
+    'type' => MENU_CALLBACK,
+    'file' => 'slims.content.inc',
+  );
+  return $items;
+}
+
+/**
+ * Implements of hook_permission().
+ */
+function slims_permission() {
+  return array(
+    'administer slims' => array(
+      'title' => t('Administer SLiMS'),
+    ),
+    'access slims' => array(
+      'title' => t('Access SLiMS bibliography detail item'),
+    ),
+    'search slims' => array(
+      'title' => t('Search on SLiMS bibliography'),
+    ),
+  );
+}
+
+/**
+ * Implements of hook_block().
+ */
+function slims_block() {
+}
+
+/**
+ * Implements of hook_theme().
+ */
+function slims_theme($existing, $type, $theme, $path) {
+  $themes = array();
+  
+  $themes['slims_single_item'] = array(
+    'variables' => array(
+      'items' => NULL,
+    ),
+    'template' => 'slims-single-item',
+  );
+
+  $themes['slims_div_items'] = array(
+    'variables' => array(
+      'items' => NULL,
+      'title' => NULL,
+    )
+  );
+
+  return $themes;
+}
+
+/**
+ * Implements of hook_block_info()
+ */
+function slims_block_info() {
+  $blocks['form']['info'] = t('SLiMS search form');
+  $blocks['form']['cache'] = DRUPAL_NO_CACHE;
+  $blocks['form']['properties']['administrative'] = TRUE;
+  
+  return $blocks;
+}
+
+/**
+ * Implements of hook_block_view()
+ */
+function slims_block_view($delta = '') {
+  if (user_access('search slims')) {
+    $block['subject'] = t('SLiMS Simple Search');
+    $block['content'] = drupal_get_form('slims_simple_search_block');
+    return $block;
+  }
+}
+
+function slims_simple_search_block($form, &$form_state) {
+  $path = explode('/', request_path());
+  $default_value = '';
+  if (count($path) == 3 AND $path[0] == 'slims' AND $path[1] == 'search')
+    $default_value = $path[2];
+  
+  $form['keywords'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Keywords'),
+    '#default_value' => $default_value,
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Search',
+  );
+  return $form;
+}
+
+function slims_simple_search_block_submit($form, &$form_state) {
+  if (trim($form_state['values']['keywords']) != '')
+    $form_state['redirect'] = 'slims/search/' . trim($form_state['values']['keywords']);
+}
+
+function theme_slims_div_items($variables) {
+  $items = $variables['items'];
+  $title = $variables['title'];
+  
+  $output = '';
+  $num_items = count($items);
+  
+  if (isset($title) && !empty($title)) {
+    $output .= '<h3>' . $variables['title'] . '</h3>';
+  }
+  $i = 0;
+  foreach($items as $item) {
+    $attributes = array();
+    $attributes['class'][] = 'slims-item';
+    $i++;
+    if ($i == 1) {
+      $attributes['class'][] = 'first';
+    }
+    if ($i == $num_items) {
+      $attributes['class'][] = 'last';
+    }
+    $attributes['class'][] = ($i % 2 == 1) ? 'odd' : 'even';
+    $output .= '<div' . drupal_attributes($attributes) . '>' . $item['data'] . "</div>\n";
+  }
+  return $output;
+}
+
+function slims_item_list_child_render($elements) {
+	foreach (array_keys($elements['#items']) AS $key) {
+		// Take the renderable array that we set in
+		// single_blog_block_view() and render it into the string
+		// that theme_item_list() expects.
+		if (is_array($elements['#items'][$key]['data'])) {
+			$elements['#items'][$key]['data'] = 
+			drupal_render($elements['#items'][$key]['data']);
+		}
+	}
+	return $elements;
+}
+
+function slims_row_detail($elements) {
+  $rows = $elements['#rows'];
+  
+  $rows['edition'][0]['width'] = '200px';
+
+  $authors = $rows['authors'][1]['data'];
+  $_authors = array();
+  foreach ($authors as $author) {
+	//~ $author[0] = l($author[0], 'slims/search/' . str_replace(' ', '+', $author[0]));
+	$author[0] = l($author[0], 'slims/search/' . $author[0]);
+	$_authors[] = implode(' - ', $author);
+  }
+  $rows['authors'][1]['data'] = theme('item_list', array('items' => $_authors));
+  
+  $subjects = $rows['subjects'][1]['data'];
+  $_subjects = array();
+  foreach ($subjects as $subject) {
+    $_subjects[] = l($subject, 'slims/search/' . $subject);
+  }
+  $rows['subjects'][1]['data'] = theme('item_list', array('items' => $_subjects));
+  
+  $copies = $rows['availability'][1]['data'];
+  $_copies = array();
+  foreach ($copies as $copy) {
+    $_copies[] = array(
+      array('data' => $copy['items']),
+      array('data' => $copy['location']),
+    );
+  }
+  $rows['availability'][1]['data'] = theme('table', array('rows' => $_copies));
+  
+  $picname = $rows['image'][1]['data'];
+  if (!empty($picname)) {
+    $picpath = 'lib/phpthumb/phpThumb.php?src=../../images/docs/'
+      . $picname
+      . '&'
+      . http_build_query(_slims_query_image_detail());
+  } else {
+    $picpath = 'images/default/image.png';
+    $picname = $picpath;
+  }
+  $rows['image'][1]['data'] = theme('image', array(
+    'path' => variable_get('slims_server_url', 'http://localhost/meranti/')
+      . $picpath,
+    'alt' => $picname,
+    'title' => $picname,
+    'attributes' => array('class' => 'slims-detail-img', 'id' => 'slims-detail-img'),
+  ));
+  
+  $elements['#rows'] = $rows;
+  return $elements;
+}
+
+function template_preprocess_slims_single_item(&$variables) {
+  $item = $variables['items'];
+  
+  // Create a renderable array for the title.
+  //~ $variables['title'] = array(
+    //~ '#type' => 'link',
+    //~ '#title' => $node->title,
+    //~ '#href' => 'node/' . $node->nid,
+  //~ );
+  
+  $variables['title'] = $item['title'];
+  $variables['authors'] = $item['authors'];
+  
+  $picname = $item['image'];
+  if (!empty($picname)) {
+    $picpath = 'lib/phpthumb/phpThumb.php?src=../../images/docs/'
+      . $picname
+      . '&'
+      . http_build_query(_slims_query_image_thumb());
+  } else {
+    $picpath = 'images/default/image.png';
+    $picname = $picpath;
+  }
+  $variables['image'] = theme('image', array(
+    'path' => variable_get('slims_server_url', 'http://localhost/meranti/')
+      . $picpath,
+    'alt' => $picname,
+    'title' => $picname,
+    'attributes' => array('class' => 'slims-detail-img', 'id' => 'slims-detail-' . $item['id']),
+  ));
+}
+
+function pager_array_splice($data, $limit = 9, $element = 0) {
+  global $pager_page_array, $pager_total, $pager_total_items;
+  $page = isset($_GET['page']) ? $_GET['page'] : '';
+
+  // Convert comma-separated $page to an array, used by other functions.
+  $pager_page_array = explode(',', $page);
+
+  // We calculate the total of pages as ceil(items / limit).
+  $pager_total_items[$element] = count($data);
+  $pager_total[$element] = ceil($pager_total_items[$element] / $limit);
+  $pager_page_array[$element] = max(0, min((int)$pager_page_array[$element], ((int)$pager_total[$element]) - 1));
+  return array_slice($data, $pager_page_array[$element] * $limit, $limit, TRUE);
+}
+
+function _slims_receiver_items($page = 0, $keyword = '') {
+  $slims_url = variable_get('slims_server_url', 'http://localhost/meranti/');
+  $prexmlquery = _slims_query_xml_items($page + 1, implode('+', explode(' ', $keyword)));
+  $obj = @simplexml_load_file($slims_url . 'index.php?' . http_build_query($prexmlquery));
+  $items = array();
+  $nums = 0;
+  $total = 0;
+  if ($obj) {
+    $result = $obj->children('slims', TRUE)->resultInfo;
+    if ($result->modsResultShowed > 0) {
+      foreach ($obj->mods as $item)
+      {
+        $array = array();
+        foreach ($item->name as $names) {
+          $array[] = $names->namePart;
+        }
+        $items[] = array(
+          'id' => $item['ID'],
+          'title' => l($item->titleInfo->title . $item->titleInfo->subTitle, 'slims/detail/' . $item['ID']),
+          'authors' => t('Author(s): @authors', array('@authors' => implode(' - ', $array))),
+          'image' => $item->children('slims', TRUE)->image,
+        );
+      }
+    }
+    $total = $result->modsResultNum;
+    $nums = $result->modsResultShowed;
+  }
+  
+  return array('total' => $total,
+    'nums' => $nums,
+    'items' => $items,
+    //~ 'log' => http_build_query($prexmlquery)
+  );
+}
+
+function _slims_receiver_details($id = '') {
+  $slims_url = variable_get('slims_server_url', 'http://slims.web.id/demo/');
+  $prexmldetailquery = _slims_query_xml_detail($id);
+  $obj = simplexml_load_file($slims_url . 'index.php?' . http_build_query($prexmldetailquery));
+  $items = array();
+  if ($obj) {
+    $mods = $obj->mods;
+    
+    $authors = array();
+    if (isset($mods->name)) {
+      foreach ($mods->name as $n) {
+        $authors[] = array($n->namePart, $n['type'], $n->role->roleTerm);
+      }
+    }
+    
+    $subjects = array();
+    if (isset($mods->subject)) {
+      foreach ($mods->subject as $s) {
+        $subjects[] = $s->topic;
+      }
+    }
+    
+    $copies = array();
+    if (isset($mods->location->holdingSimple->copyInformation)) {
+      foreach (@$mods->location->holdingSimple->copyInformation as $c) {
+        $copies[] = array(
+          'items' => $c->numerationAndChronology,
+          'location' => $c->sublocation
+        );
+      }
+    }
+    
+    $items = array(
+      'title' => array(
+        'key' => t('Title'),
+        'val' => $mods->titleInfo->title . $mods->titleInfo->subTitle,
+      ),
+      'edition' => array(
+        'key' => t('Edition'),
+        'val' => @$mods->originInfo->edition,
+      ),
+      'callnumber' => array(
+        'key' => t('Call Number'),
+        'val' => @$mods->location->shelfLocator,
+      ),
+      'isbn-issn' => array(
+        'key' => t('ISBN/ISSN'),
+        'val' => @$mods->identifier,
+      ),
+      'authors' => array(
+        'key' => t('Author(s)'),
+        'val' => @$authors,
+      ),
+      'subjects' => array(
+        'key' => t('Subject(s)'),
+        'val' => @$subjects,
+      ),
+      'classification' => array(
+        'key' => t('Classification'),
+        'val' => @$mods->classification,
+      ),
+      'series' => array(
+        'key' => t('Series'),
+        'val' => @$mods->relatedItem->titleInfo->title,
+      ),
+      'gmd' => array(
+        'key' => t('GMD'),
+        'val' => @$mods->physicalDescription->form,
+      ),
+      'language' => array(
+        'key' => t('Language'),
+        'val' => @$mods->language->languageTerm[1],
+      ),
+      'publisher' => array(
+        'key' => t('Publisher'),
+        'val' => @$mods->originInfo->publisher,
+      ),
+      'publish_year' => array(
+        'key' => t('Publishing Year'),
+        'val' => @$mods->originInfo->dateIssued,
+      ),
+      'publish_place' => array(
+        'key' => t('Publishing Place'),
+        'val' => @$mods->originInfo->place,
+      ),
+      'collation' => array(
+        'key' => t('Collation'),
+        'val' => @$mods->physicalDescription->extent,
+      ),
+      'abstract' => array(
+        'key' => t('Abstract/Notes'),
+        'val' => @$mods->note,
+      ),
+      'image' => array(
+        'key' => t('Picture'),
+        'val' => @$mods->children('slims', TRUE)->image,
+      ),
+      'availability' => array(
+        'key' => t('Items'),
+        'val' => @$copies,
+      ),
+    );
+
+  }
+  
+  return array('items' => $items);
+}
+
+function _slims_query_image_detail() {
+  return array('w' => variable_get('slims_image_detail_size', 200));
+}
+
+function _slims_query_image_thumb() {
+  return array('w' => variable_get('slims_image_thumb_size', 42));
+}
+
+function _slims_query_xml_detail($id) {
+  return array('p' => 'show_detail',
+    'inXML' => 'true',
+    'id' => $id,
+  );
+}
+
+function _slims_query_xml_items($page = 0, $keyword = '') {
+  return array('resultXML' => 'true',
+    'search' => 'Search',
+    'gmd' => 0,
+    'colltype' => 0,
+    'location' => 0,
+    'keywords' => $keyword,
+    'title' => '',
+    'author' => '',
+    'subject' => '',
+    'isbn' => '',
+    'page' => $page,
+    'detail' => 1,
+  );
+}
