@@ -1,0 +1,62 @@
+<?php
+
+/**
+ * @file
+ * Install, update, and uninstall functions for the image_example module.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function slims_install() {
+  $_p = 'slims';
+  variable_set($_p . '_server_url', 'http://localhost/slims/');
+  variable_set($_p . '_server_title', 'Senayan');
+  variable_set($_p . '_server_subtitle', 'Open Source Library Management System');
+  variable_set($_p . '_image_thumb_size', '42');
+  variable_set($_p . '_image_detail_size', '200');
+  variable_set($_p . '_image_opt', 0);
+  variable_set($_p . '_image_empty_opt', 0);
+  
+  $style = image_style_save(array('name' => 'slims-thumb'));
+  $effect = array(
+    'name' => 'image_scale',
+    'data' => array(
+      'width' => variable_get($_p . '_image_thumb_size', 42),
+      'height' => variable_get($_p . '_image_thumb_size', 42),
+      'upscale' => TRUE,
+    ),
+    'isid' => $style['isid'],
+  );
+  image_effect_save($effect);
+  
+  $style = image_style_save(array('name' => 'slims-detail'));
+  $effect = array(
+    'name' => 'image_scale',
+    'data' => array(
+      'width' => variable_get($_p . '_image_detail_size', 42),
+      'height' => variable_get($_p . '_image_detail_size', 42),
+      'upscale' => TRUE,
+    ),
+    'isid' => $style['isid'],
+  );
+  image_effect_save($effect);
+
+}
+
+/**
+ * Implements hook_uninstall()
+ */
+function slims_uninstall() {
+  $_p = 'slims';
+  variable_del($_p . '_server_url');
+  variable_del($_p . '_server_title');
+  variable_del($_p . '_server_subtitle');
+  variable_del($_p . '_image_thumb_size');
+  variable_del($_p . '_image_detail_size');
+  variable_del($_p . '_image_opt');
+  variable_del($_p . '_image_empty_opt');
+  
+  image_style_delete(image_style_load('slims-thumb'));
+  image_style_delete(image_style_load('slims-detail'));
+}

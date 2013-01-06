@@ -324,7 +324,9 @@ function slims_row_detail($elements) {
       $base64 = TRUE;
     }
     else if ($slims_conf['image_empty_opt'] == 3) {
-      $picpath = drupal_get_path('module', 'slims') . '/default/empty.png';
+      $path = drupal_get_path('module', 'slims') . '/default/empty.png';
+      $picpath = image_style_path('slims-detail', $path);
+      image_style_create_derivative(image_style_load('slims-detail'), $path, $picpath);
     }
     else {
       $display_picture = FALSE;
@@ -398,7 +400,10 @@ function template_preprocess_slims_single_item(&$variables) {
       $base64 = TRUE;
     }
     else if ($slims_conf['image_empty_opt'] == 3) {
-      $picpath = drupal_get_path('module', 'slims') . '/default/empty.png';
+      $path = drupal_get_path('module', 'slims') . '/default/empty.png';
+      $picpath = image_style_path('slims-thumb', $path);
+      image_style_create_derivative(image_style_load('slims-thumb'), $path, $picpath);
+      //~ image_style_deliver(image_style_load('slims-thumb'), $path);
     }
     else {
       $display_picture = FALSE;

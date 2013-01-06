@@ -22,7 +22,6 @@ SOD module:
 * Simple search block
 * Options how to display item's picture
 
-
 Installation:
 ------------
 Install this module in the usual way (drop the file into your site's
