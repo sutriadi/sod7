@@ -95,16 +95,16 @@ function slims_menu() {
     'file' => 'slims.admin.inc',
     'weight' => 2,
   );
-  //~ $items['admin/config/slims/widget'] = array(
-    //~ 'title' => 'SLiMS Widget',
-    //~ 'description' => 'Configure the widgets of SLiMS.',
-    //~ 'page callback' => 'drupal_get_form',
-    //~ 'page arguments' => array('slims_widget_settings'),
-    //~ 'access arguments' => array('administer slims'),
-    //~ 'type' => MENU_NORMAL_ITEM,
-    //~ 'file' => 'slims.admin.inc',
-    //~ 'weight' => 1,
-  //~ );
+  $items['admin/config/slims/widget'] = array(
+    'title' => 'SLiMS widget settings',
+    'description' => 'Configure the widgets of SLiMS.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('slims_widget_settings'),
+    'access arguments' => array('administer slims'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'slims.admin.inc',
+    'weight' => 1,
+  );
   $items['slims/search'] = array(
     'title' => $slims_conf['server_title'],
     'page callback' => 'slims_search',
@@ -115,9 +115,6 @@ function slims_menu() {
     'file' => 'slims.content.inc',
   );
   $items['slims/detail'] = array(
-    //~ 'title' => t('Record Detail'),
-    //~ 'title callback' => 'slims_item_title',
-    //~ 'title arguments' => array(2),
     'page callback' => 'slims_item_details',
     'page arguments' => array(2),
     'access arguments' => array('access slims'),
@@ -185,9 +182,19 @@ function slims_theme($existing, $type, $theme, $path) {
  * Implements of hook_block_info()
  */
 function slims_block_info() {
-  $blocks['form']['info'] = t('SLiMS search form');
-  $blocks['form']['cache'] = DRUPAL_NO_CACHE;
+  $blocks = array();
+  
+  $blocks['form'] = array(
+    'info' => t('SLiMS search form'),
+    'cache' => DRUPAL_NO_CACHE,
+  );
   $blocks['form']['properties']['administrative'] = TRUE;
+  
+  $blocks['list'] = array(
+    'info' => t('SLiMS items'),
+    'cache' => DRUPAL_NO_CACHE,
+  );
+  $blocks['list']['properties']['administrative'] = TRUE;
   
   return $blocks;
 }
@@ -196,13 +203,22 @@ function slims_block_info() {
  * Implements of hook_block_view()
  */
 function slims_block_view($delta = '') {
-  if (user_access('search slims')) {
-    $block['subject'] = t('SLiMS Simple Search');
-    $block['content'] = drupal_get_form('slims_simple_search_block');
-    return $block;
+  if ($delta == 'form') {
+    if (user_access('search slims')) {
+      $block['subject'] = t('SLiMS Simple Search');
+      $block['content'] = drupal_get_form('slims_simple_search_block');
+    }
   }
+  else if ($delta == 'list') {
+    $block['subject'] = t('SLiMS Items');
+    $block['content'] = slims_list_block();
+  }
+  return $block;
 }
 
+/**
+ * SLiMS Simple Search block's content
+ */
 function slims_simple_search_block($form, &$form_state) {
   $path = explode('/', request_path());
   $default_value = '';
@@ -222,11 +238,59 @@ function slims_simple_search_block($form, &$form_state) {
   return $form;
 }
 
+/**
+ * Form submission for slims_simple_search_block()
+ */
 function slims_simple_search_block_submit($form, &$form_state) {
   if (trim($form_state['values']['keywords']) != '')
     $form_state['redirect'] = 'slims/search/' . trim($form_state['values']['keywords']);
 }
 
+/**
+ * SLiMS Items block's content
+ */
+function slims_list_block() {
+  $page = 0;
+  $key = '';
+  $limit = 3;
+
+  $data = _slims_receiver_items($page, $key);
+
+  $items = array();
+  $l = 0;
+  foreach ($data['items'] as $item) {
+    $l++;
+    if ($l > $limit)
+      continue;
+    $items[] = array(
+      'data' => array(
+        '#theme' => 'slims_single_item',
+        '#items' => $item,
+      ),
+      'class' => array('item-' . $item['id']),
+    );
+  }
+  
+  if (!empty($items)) {
+    $render_array['slims_list'] = array(
+      '#theme' => 'slims_div_items',
+      '#items' => $items,
+      '#pre_render' => array('slims_item_list_child_render'),
+    );
+    
+    $render_array['slims_full'] = array(
+      '#theme' => 'more_link',
+      '#url' => 'slims/search',
+      '#title' => t('more'),
+    );
+  }
+
+  return $render_array;
+}
+
+/*
+ * Theme for display list of items with div tag
+ */
 function theme_slims_div_items($variables) {
   $items = $variables['items'];
   $title = $variables['title'];
@@ -254,6 +318,9 @@ function theme_slims_div_items($variables) {
   return $output;
 }
 
+/*
+ * Theme for display image with base64 encoding string
+ */
 function theme_slims_image64($variables) {
   $variables['src'] = $variables['data'];
   unset($variables['data']);
@@ -324,9 +391,8 @@ function slims_row_detail($elements) {
       $base64 = TRUE;
     }
     else if ($slims_conf['image_empty_opt'] == 3) {
-      $path = drupal_get_path('module', 'slims') . '/default/empty.png';
+      $picpath = drupal_get_path('module', 'slims') . '/default/empty.png';
       $picpath = image_style_path('slims-detail', $path);
-      image_style_create_derivative(image_style_load('slims-detail'), $path, $picpath);
     }
     else {
       $display_picture = FALSE;
@@ -402,8 +468,6 @@ function template_preprocess_slims_single_item(&$variables) {
     else if ($slims_conf['image_empty_opt'] == 3) {
       $path = drupal_get_path('module', 'slims') . '/default/empty.png';
       $picpath = image_style_path('slims-thumb', $path);
-      image_style_create_derivative(image_style_load('slims-thumb'), $path, $picpath);
-      //~ image_style_deliver(image_style_load('slims-thumb'), $path);
     }
     else {
       $display_picture = FALSE;

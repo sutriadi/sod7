@@ -97,13 +97,83 @@ function slims_picture_settings() {
     '#options' => $image_empty_opts,
     '#description' => t('Select an option how to handle when picture of an item is empty'),
   );
-  return system_settings_form($form);
+  $form['actions'] = array('#type' => 'actions');
+  $form['actions']['submit'] = array(
+    '#type' => 'submit', 
+    '#value' => t('Save configuration'),
+  );
+  return $form;
+}
+
+/**
+ * Form submission handle for slims_picture_settings()
+ */
+function slims_picture_settings_submit($form, &$form_state) {
+  $_p = 'slims';
+  
+  $slims_thumb = image_style_load('slims-thumb');
+  $x = 0;
+  foreach ($slims_thumb['effects'] as $effect) {
+    $x++;
+    if ($x == 1) {
+      $effect['data'] = array(
+        'width' => $form_state['values'][$_p . '_image_thumb_size'],
+        'height' => $form_state['values'][$_p . '_image_thumb_size'],
+        'upscale' => TRUE,
+      );
+      $effects = array($effect['ieid'] => $effect);
+      image_effect_save($effects[$effect['ieid']]);
+    }
+    else {
+      image_effect_delete($effect);
+    }
+  }
+  $path = drupal_get_path('module', 'slims') . '/default/empty.png';
+  $picpath = image_style_path('slims-thumb', $path);
+  image_style_create_derivative(image_style_load('slims-thumb'), $path, $picpath);
+
+  $slims_thumb = image_style_load('slims-detail');
+  $x = 0;
+  foreach ($slims_thumb['effects'] as $effect) {
+    $x++;
+    if ($x == 1) {
+      $effect['data'] = array(
+        'width' => $form_state['values'][$_p . '_image_detail_size'],
+        'height' => $form_state['values'][$_p . '_image_detail_size'],
+        'upscale' => TRUE,
+      );
+      $effects = array($effect['ieid'] => $effect);
+      image_effect_save($effects[$effect['ieid']]);
+    }
+    else {
+      image_effect_delete($effect);
+    }
+  }
+  $path = drupal_get_path('module', 'slims') . '/default/empty.png';
+  $picpath = image_style_path('slims-detail', $path);
+  image_style_create_derivative(image_style_load('slims-detail'), $path, $picpath);
+  
+  system_settings_form_submit($form, $form_state);
 }
 
 /**
  * Pictures import tool
  */
 function slims_pictures_tool() {
+  $slims_conf = slims_conf();
+  $_p = 'slims';
+  $form['import'] = array(
+    '#type' => 'item',
+    '#title' => t('Underconstruction'),
+    '#markup' => t('Please wait for some moment...'),
+  );
+  return $form;
+}
+
+/**
+ * Settings for widget
+ */
+function slims_widget_settings() {
   $slims_conf = slims_conf();
   $_p = 'slims';
   $form['import'] = array(
