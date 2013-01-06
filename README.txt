@@ -20,6 +20,7 @@ SOD module:
 
 * SLiMS server configuration
 * Simple search block
+* Options how to display item's picture
 
 
 Installation:

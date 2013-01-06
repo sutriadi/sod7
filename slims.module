@@ -16,6 +16,8 @@ function slims_conf() {
     'server_subtitle' => variable_get($_p . '_server_subtitle', 'Open Source Library Management System'),
     'image_thumb_size' => variable_get($_p . '_image_thumb_size', '42'),
     'image_detail_size' => variable_get($_p . '_image_detail_size', '200'),
+    'image_opt' => variable_get($_p . '_image_opt', 0),
+    'image_empty_opt' => variable_get($_p . '_image_empty_opt', 0),
   );
   return $conf;
 }
@@ -72,6 +74,26 @@ function slims_menu() {
     'type' => MENU_NORMAL_ITEM,
     'file' => 'slims.admin.inc',
     'weight' => 0,
+  );
+  $items['admin/config/slims/picture'] = array(
+    'title' => 'SLiMS picture settings',
+    'description' => 'Configure how to display picture from SLiMS.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('slims_picture_settings'),
+    'access arguments' => array('administer slims'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'slims.admin.inc',
+    'weight' => 1,
+  );
+  $items['admin/config/slims/importpic'] = array(
+    'title' => 'SLiMS import pictures tool',
+    'description' => 'Import picture from SLiMS server to Drupal files.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('slims_pictures_tool'),
+    'access arguments' => array('administer slims'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'slims.admin.inc',
+    'weight' => 2,
   );
   //~ $items['admin/config/slims/widget'] = array(
     //~ 'title' => 'SLiMS Widget',
@@ -139,6 +161,14 @@ function slims_theme($existing, $type, $theme, $path) {
       'items' => NULL,
     ),
     'template' => 'slims-single-item',
+  );
+
+  $themes['slims_image64'] = array(
+    'variables' => array(
+      'data' => NULL,
+      'alt' => NULL,
+      'title' => NULL,
+    )
   );
 
   $themes['slims_div_items'] = array(
@@ -224,6 +254,14 @@ function theme_slims_div_items($variables) {
   return $output;
 }
 
+function theme_slims_image64($variables) {
+  $variables['src'] = $variables['data'];
+  unset($variables['data']);
+  $output = '<img' . drupal_attributes($variables) . ' />';
+
+  return $output;
+}
+
 function slims_item_list_child_render($elements) {
 	foreach (array_keys($elements['#items']) AS $key) {
 		// Take the renderable array that we set in
@@ -238,6 +276,8 @@ function slims_item_list_child_render($elements) {
 }
 
 function slims_row_detail($elements) {
+  $slims_conf = slims_conf();
+  $_p = 'slims';
   $rows = $elements['#rows'];
   
   $rows['edition'][0]['width'] = '200px';
@@ -269,28 +309,67 @@ function slims_row_detail($elements) {
   $rows['availability'][1]['data'] = theme('table', array('rows' => $_copies));
   
   $picname = $rows['image'][1]['data'];
-  if (!empty($picname)) {
-    $picpath = 'lib/phpthumb/phpThumb.php?src=../../images/docs/'
-      . $picname
-      . '&'
-      . http_build_query(_slims_query_image_detail());
-  } else {
-    $picpath = 'images/default/image.png';
-    $picname = $picpath;
+
+  $display_picture = TRUE;
+  $base64 = FALSE;
+  if (empty($picname)) {
+    if ($slims_conf['image_empty_opt'] == 1) {
+      $picpath = $slims_conf['server_url'] . 'images/default/image.png';
+    }
+    else if ($slims_conf['image_empty_opt'] == 2) {
+      $picpath = $slims_conf['server_url'] . 'images/default/image.png';
+      $filetype = pathinfo('image.png', PATHINFO_EXTENSION);
+      $image_data = file_get_contents($picpath);
+      $picpath = 'data:image/' . $filetype . ';base64,' . base64_encode($image_data);
+      $base64 = TRUE;
+    }
+    else if ($slims_conf['image_empty_opt'] == 3) {
+      $picpath = drupal_get_path('module', 'slims') . '/default/empty.png';
+    }
+    else {
+      $display_picture = FALSE;
+    }
   }
-  $rows['image'][1]['data'] = theme('image', array(
-    'path' => variable_get('slims_server_url', 'http://localhost/meranti/')
-      . $picpath,
-    'alt' => $picname,
-    'title' => $picname,
-    'attributes' => array('class' => 'slims-detail-img', 'id' => 'slims-detail-img'),
-  ));
-  
+  else {
+    if ($slims_conf['image_opt'] == 1) {
+      $base64 = TRUE;
+      $filetype = pathinfo($picname, PATHINFO_EXTENSION);
+      $image_data = file_get_contents($slims_conf['server_url']
+        . 'lib/phpthumb/phpThumb.php?src=../../images/docs/'
+        . $picname
+        . '&'
+        . http_build_query(_slims_query_image_detail())
+      );
+      $picpath = 'data:image/' . $filetype . ';base64,' . base64_encode($image_data);
+    }
+    else {
+      $picpath = $slims_conf['server_url']
+        . 'lib/phpthumb/phpThumb.php?src=../../images/docs/'
+        . $picname
+        . '&'
+        . http_build_query(_slims_query_image_detail());
+    } 
+  }
+  if ($display_picture) {
+    $rows['image'][1]['data'] = theme(($base64) ? 'slims_image64' : 'image', array(
+      ($base64 ? 'data' : 'path') => $picpath,
+      'alt' => empty($picname) ? t('Unknown') : $picname,
+      'title' => empty($picname) ? t('Unknown') : $picname,
+      'attributes' => array('class' => 'slims-detail-img', 'id' => 'slims-detail-img'),
+    ));
+  }
+  else {
+    $rows['image'][1]['data'] = '';
+  }
+
   $elements['#rows'] = $rows;
   return $elements;
 }
 
 function template_preprocess_slims_single_item(&$variables) {
+  $slims_conf = slims_conf();
+  $_p = 'slims';
+  
   $item = $variables['items'];
   
   // Create a renderable array for the title.
@@ -304,22 +383,58 @@ function template_preprocess_slims_single_item(&$variables) {
   $variables['authors'] = $item['authors'];
   
   $picname = $item['image'];
-  if (!empty($picname)) {
-    $picpath = 'lib/phpthumb/phpThumb.php?src=../../images/docs/'
-      . $picname
-      . '&'
-      . http_build_query(_slims_query_image_thumb());
-  } else {
-    $picpath = 'images/default/image.png';
-    $picname = $picpath;
+
+  $display_picture = TRUE;
+  $base64 = FALSE;
+  if (empty($picname)) {
+    if ($slims_conf['image_empty_opt'] == 1) {
+      $picpath = $slims_conf['server_url'] . 'images/default/image.png';
+    }
+    else if ($slims_conf['image_empty_opt'] == 2) {
+      $picpath = $slims_conf['server_url'] . 'images/default/image.png';
+      $filetype = pathinfo('image.png', PATHINFO_EXTENSION);
+      $image_data = file_get_contents($picpath);
+      $picpath = 'data:image/' . $filetype . ';base64,' . base64_encode($image_data);
+      $base64 = TRUE;
+    }
+    else if ($slims_conf['image_empty_opt'] == 3) {
+      $picpath = drupal_get_path('module', 'slims') . '/default/empty.png';
+    }
+    else {
+      $display_picture = FALSE;
+    }
   }
-  $variables['image'] = theme('image', array(
-    'path' => variable_get('slims_server_url', 'http://localhost/meranti/')
-      . $picpath,
-    'alt' => $picname,
-    'title' => $picname,
-    'attributes' => array('class' => 'slims-detail-img', 'id' => 'slims-detail-' . $item['id']),
-  ));
+  else {
+    if ($slims_conf['image_opt'] == 1) {
+      $base64 = TRUE;
+      $filetype = pathinfo($picname, PATHINFO_EXTENSION);
+      $image_data = file_get_contents($slims_conf['server_url']
+        . 'lib/phpthumb/phpThumb.php?src=../../images/docs/'
+        . $picname
+        . '&'
+        . http_build_query(_slims_query_image_thumb())
+      );
+      $picpath = 'data:image/' . $filetype . ';base64,' . base64_encode($image_data);
+    }
+    else {
+      $picpath = $slims_conf['server_url']
+        . 'lib/phpthumb/phpThumb.php?src=../../images/docs/'
+        . $picname
+        . '&'
+        . http_build_query(_slims_query_image_thumb());
+    } 
+  }
+  if ($display_picture) {
+    $variables['image'] = theme(($base64) ? 'slims_image64' : 'image', array(
+      ($base64 ? 'data' : 'path') => $picpath,
+      'alt' => empty($picname) ? t('Unknown') : $picname,
+      'title' => empty($picname) ? t('Unknown') : $picname,
+      'attributes' => array('class' => 'slims-detail-img', 'id' => 'slims-detail-' . $item['id']),
+    ));
+  }
+  else {
+    $variables['image'] = '';
+  }
 }
 
 function pager_array_splice($data, $limit = 9, $element = 0) {
