@@ -17,6 +17,11 @@ function slims_install() {
   variable_set($_p . '_image_detail_size', '200');
   variable_set($_p . '_image_opt', 0);
   variable_set($_p . '_image_empty_opt', 0);
+  variable_set($_p . '_search_input_size', '');
+  variable_set($_p . '_list_page', 1);
+  variable_set($_p . '_list_key', '');
+  variable_set($_p . '_list_limit', 3);
+  variable_set($_p . '_list_more_key', 1);
   
   $style = image_style_save(array('name' => 'slims-thumb'));
   $effect = array(
@@ -56,6 +61,11 @@ function slims_uninstall() {
   variable_del($_p . '_image_detail_size');
   variable_del($_p . '_image_opt');
   variable_del($_p . '_image_empty_opt');
+  variable_del($_p . '_search_input_size');
+  variable_del($_p . '_list_page');
+  variable_del($_p . '_list_key');
+  variable_del($_p . '_list_limit');
+  variable_del($_p . '_list_more_key');
   
   image_style_delete(image_style_load('slims-thumb'));
   image_style_delete(image_style_load('slims-detail'));

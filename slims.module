@@ -18,6 +18,11 @@ function slims_conf() {
     'image_detail_size' => variable_get($_p . '_image_detail_size', '200'),
     'image_opt' => variable_get($_p . '_image_opt', 0),
     'image_empty_opt' => variable_get($_p . '_image_empty_opt', 0),
+    'search_input_size' => variable_get($_p . '_search_input_size', ''),
+    'list_page' => variable_get($_p . '_list_page', 1),
+    'list_key' => variable_get($_p . '_list_key', ''),
+    'list_limit' => variable_get($_p . '_list_limit', 3),
+    'list_more_key' => variable_get($_p . '_list_more_key', 1),
   );
   return $conf;
 }
@@ -85,16 +90,6 @@ function slims_menu() {
     'file' => 'slims.admin.inc',
     'weight' => 1,
   );
-  $items['admin/config/slims/importpic'] = array(
-    'title' => 'SLiMS import pictures tool',
-    'description' => 'Import picture from SLiMS server to Drupal files.',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('slims_pictures_tool'),
-    'access arguments' => array('administer slims'),
-    'type' => MENU_NORMAL_ITEM,
-    'file' => 'slims.admin.inc',
-    'weight' => 2,
-  );
   $items['admin/config/slims/widget'] = array(
     'title' => 'SLiMS widget settings',
     'description' => 'Configure the widgets of SLiMS.',
@@ -103,7 +98,17 @@ function slims_menu() {
     'access arguments' => array('administer slims'),
     'type' => MENU_NORMAL_ITEM,
     'file' => 'slims.admin.inc',
-    'weight' => 1,
+    'weight' => 2,
+  );
+  $items['admin/config/slims/importpic'] = array(
+    'title' => 'SLiMS import pictures tool',
+    'description' => 'Import picture from SLiMS server to Drupal files.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('slims_pictures_tool'),
+    'access arguments' => array('administer slims'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'slims.admin.inc',
+    'weight' => 3,
   );
   $items['slims/search'] = array(
     'title' => $slims_conf['server_title'],
@@ -220,6 +225,8 @@ function slims_block_view($delta = '') {
  * SLiMS Simple Search block's content
  */
 function slims_simple_search_block($form, &$form_state) {
+  $slims_conf = slims_conf();
+  
   $path = explode('/', request_path());
   $default_value = '';
   if (count($path) == 3 AND $path[0] == 'slims' AND $path[1] == 'search')
@@ -230,6 +237,9 @@ function slims_simple_search_block($form, &$form_state) {
     '#title' => t('Keywords'),
     '#default_value' => $default_value,
   );
+  if (trim($slims_conf['search_input_size']) != 0 AND trim($slims_conf['search_input_size']) != '') {
+    $form['keywords']['#size'] = $slims_conf['search_input_size'];
+  }
 
   $form['submit'] = array(
     '#type' => 'submit',
@@ -250,9 +260,10 @@ function slims_simple_search_block_submit($form, &$form_state) {
  * SLiMS Items block's content
  */
 function slims_list_block() {
-  $page = 0;
-  $key = '';
-  $limit = 3;
+  $slims_conf = slims_conf();
+  $page = ($slims_conf['list_page'] - 1 < 0) ? 0 : $slims_conf['list_page'] - 1;
+  $key = $slims_conf['list_key'];
+  $limit = is_numeric($slims_conf['list_limit']) ? $slims_conf['list_limit'] : 3;
 
   $data = _slims_receiver_items($page, $key);
 
@@ -280,7 +291,8 @@ function slims_list_block() {
     
     $render_array['slims_full'] = array(
       '#theme' => 'more_link',
-      '#url' => 'slims/search',
+      '#url' => ($slims_conf['list_more_key'] == 1 AND !empty($slims_conf['list_key'])) ?
+        'slims/search/' . $slims_conf['list_key'] : 'slims/search',
       '#title' => t('more'),
     );
   }
@@ -288,7 +300,7 @@ function slims_list_block() {
   return $render_array;
 }
 
-/*
+/**
  * Theme for display list of items with div tag
  */
 function theme_slims_div_items($variables) {
@@ -318,7 +330,7 @@ function theme_slims_div_items($variables) {
   return $output;
 }
 
-/*
+/**
  * Theme for display image with base64 encoding string
  */
 function theme_slims_image64($variables) {
@@ -329,6 +341,9 @@ function theme_slims_image64($variables) {
   return $output;
 }
 
+/**
+ * Render each element of items
+ */
 function slims_item_list_child_render($elements) {
 	foreach (array_keys($elements['#items']) AS $key) {
 		// Take the renderable array that we set in
@@ -342,6 +357,9 @@ function slims_item_list_child_render($elements) {
 	return $elements;
 }
 
+/**
+ * Render each row of item's detail
+ */
 function slims_row_detail($elements) {
   $slims_conf = slims_conf();
   $_p = 'slims';
@@ -434,6 +452,9 @@ function slims_row_detail($elements) {
   return $elements;
 }
 
+/**
+ * Proprocess of slims_single_item theme
+ */
 function template_preprocess_slims_single_item(&$variables) {
   $slims_conf = slims_conf();
   $_p = 'slims';
@@ -506,6 +527,9 @@ function template_preprocess_slims_single_item(&$variables) {
   }
 }
 
+/**
+ * Pager modification function for non-SQL data
+ */
 function pager_array_splice($data, $limit = 9, $element = 0) {
   global $pager_page_array, $pager_total, $pager_total_items;
   $page = isset($_GET['page']) ? $_GET['page'] : '';
@@ -520,6 +544,9 @@ function pager_array_splice($data, $limit = 9, $element = 0) {
   return array_slice($data, $pager_page_array[$element] * $limit, $limit, TRUE);
 }
 
+/**
+ * Receiver data from XML for list of items
+ */
 function _slims_receiver_items($page = 0, $keyword = '') {
   $slims_url = variable_get('slims_server_url', 'http://localhost/meranti/');
   $prexmlquery = _slims_query_xml_items($page + 1, implode('+', explode(' ', $keyword)));
@@ -555,6 +582,9 @@ function _slims_receiver_items($page = 0, $keyword = '') {
   );
 }
 
+/**
+ * Receiver data from XML for item's detail
+ */
 function _slims_receiver_details($id = '') {
   $slims_url = variable_get('slims_server_url', 'http://slims.web.id/demo/');
   $prexmldetailquery = _slims_query_xml_detail($id);
@@ -663,14 +693,23 @@ function _slims_receiver_details($id = '') {
   return array('items' => $items);
 }
 
+/**
+ * Array of image detail query
+ */
 function _slims_query_image_detail() {
   return array('w' => variable_get('slims_image_detail_size', 200));
 }
 
+/**
+ * Array of image thumb query
+ */
 function _slims_query_image_thumb() {
   return array('w' => variable_get('slims_image_thumb_size', 42));
 }
 
+/**
+ * Array of XML item's detail query
+ */
 function _slims_query_xml_detail($id) {
   return array('p' => 'show_detail',
     'inXML' => 'true',
@@ -678,6 +717,9 @@ function _slims_query_xml_detail($id) {
   );
 }
 
+/**
+ * Array of XML list of items query
+ */
 function _slims_query_xml_items($page = 0, $keyword = '') {
   return array('resultXML' => 'true',
     'search' => 'Search',

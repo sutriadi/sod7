@@ -176,10 +176,56 @@ function slims_pictures_tool() {
 function slims_widget_settings() {
   $slims_conf = slims_conf();
   $_p = 'slims';
-  $form['import'] = array(
-    '#type' => 'item',
-    '#title' => t('Underconstruction'),
-    '#markup' => t('Please wait for some moment...'),
+  $form['search'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('SLiMS Simple Search'),
+    '#weight' => 0,
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
   );
-  return $form;
+  $form['search'][$_p . '_search_input_size'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Search input size'),
+    '#default_value' => $slims_conf['search_input_size'],
+    '#size' => 3,
+    '#maxlength' => 3,
+    '#description' => t('Width (in characters) of the search input textfield. Leave empty for automatic.'),
+  );
+  $form['list'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('SLiMS Items'),
+    '#weight' => 1,
+    '#collapsible' =>  TRUE,
+    '#collapsed' => FALSE,
+  );
+  $form['list'][$_p . '_list_page'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Page number'),
+    '#default_value' => $slims_conf['list_page'],
+    '#size' => 3,
+    '#maxlength' => 3,
+    '#description' => t('Page number to be displayed. Page 1 if empty.'),
+  );
+  $form['list'][$_p . '_list_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Keywords'),
+    '#default_value' => $slims_conf['list_key'],
+    '#description' => t('Keywords to filter the list.'),
+  );
+  $form['list'][$_p . '_list_limit'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Limit'),
+    '#size' => 2,
+    '#maxlength' => 2,
+    '#default_value' => $slims_conf['list_limit'],
+    '#description' => t('Limit of items to be displayed. Its max number depending of configuration from SLiMS server.'),
+  );
+  $form['list'][$_p . '_list_more_key'] = array(
+    '#type' => 'radios',
+    '#title' => t('More link with key'),
+    '#default_value' => $slims_conf['list_more_key'],
+    '#options' => array(0 => t('No.'), 1 => t('Yes.')),
+    '#description' => t('Option when more link clicked. Yes will continue to search result that specified with keywords.'),
+  );
+  return system_settings_form($form);
 }
