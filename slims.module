@@ -229,6 +229,24 @@ function slims_block_configure($delta = '') {
   return $form;
 }
 
+/**
+ * Implements of hook_block_save()
+ */
+function slims_block_save($delta = '', $edit = array()) {
+  $_p = 'slims';
+  if ($delta == 'form') {
+    variable_set($_p . '_search_input_size', $edit[$_p . '_search_input_size']);
+  } else if ($delta == 'list') {
+    variable_set($_p . '_list_page', $edit[$_p . '_list_page']);
+    variable_set($_p . '_list_key', $edit[$_p . '_list_key']);
+    variable_set($_p . '_list_limit', $edit[$_p . '_list_limit']);
+    variable_set($_p . '_list_more_key', $edit[$_p . '_list_more_key']);
+  }
+}
+
+/**
+ * simple search form settings
+ */
 function slims_search_form_configure() {
   $slims_conf = slims_conf();
   $_p = 'slims';
@@ -250,6 +268,9 @@ function slims_search_form_configure() {
   return $form;
 }
 
+/**
+ * items list form settings
+ */
 function slims_list_form_configure() {
   $slims_conf = slims_conf();
   $_p = 'slims';
