@@ -348,7 +348,7 @@ function slims_simple_search_block_submit($form, &$form_state) {
 }
 
 /**
- * SLiMS Advanced Search block's content
+ * SLiMS Advanced Search block's content.
  */
 function slims_advanced_search_block($form, &$form_state) {
   $slims_conf = slims_conf();
@@ -395,7 +395,7 @@ function slims_advanced_search_block_submit($form, &$form_state) {
   unset($query['form_id']);
   unset($query['form_token']);
   unset($query['op']);
-  global $form_state;
+  // global $form_state;
   drupal_goto('slims/advanced/', array('query' => $query));
 }
 
@@ -414,8 +414,9 @@ function slims_list_block() {
   $l = 0;
   foreach ($data['items'] as $item) {
     $l++;
-    if ($l > $limit)
+    if ($l > $limit) {
       continue;
+    }
     $items[] = array(
       'data' => array(
         '#theme' => 'slims_single_item',
@@ -434,8 +435,7 @@ function slims_list_block() {
 
     $render_array['slims_full'] = array(
       '#theme' => 'more_link',
-      '#url' => ($slims_conf['list_more_key'] == 1 AND !empty($slims_conf['list_key'])) ?
-        'slims/search/' . $slims_conf['list_key'] : 'slims/search',
+      '#url' => ($slims_conf['list_more_key'] == 1 AND !empty($slims_conf['list_key'])) ? 'slims/search/' . $slims_conf['list_key'] : 'slims/search',
       '#title' => t('more'),
     );
   }
@@ -457,7 +457,7 @@ function theme_slims_div_items($variables) {
     $output .= '<h3>' . $variables['title'] . '</h3>';
   }
   $i = 0;
-  foreach($items as $item) {
+  foreach ($items as $item) {
     $attributes = array();
     $attributes['class'][] = 'slims-item';
     $i++;
@@ -488,20 +488,19 @@ function theme_slims_image64($variables) {
  * Render each element of items.
  */
 function slims_item_list_child_render($elements) {
-	foreach (array_keys($elements['#items']) AS $key) {
-		// Take the renderable array that we set in
-		// single_blog_block_view() and render it into the string
-		// that theme_item_list() expects.
-		if (is_array($elements['#items'][$key]['data'])) {
-			$elements['#items'][$key]['data'] = 
-			drupal_render($elements['#items'][$key]['data']);
-		}
-	}
-	return $elements;
+  foreach (array_keys($elements['#items']) AS $key) {
+    // Take the renderable array that we set in
+    // single_blog_block_view() and render it into the string
+    // that theme_item_list() expects.
+    if (is_array($elements['#items'][$key]['data'])) {
+      $elements['#items'][$key]['data'] = drupal_render($elements['#items'][$key]['data']);
+    }
+  }
+  return $elements;
 }
 
 /**
- * Render each row of item's detail
+ * Render each row of item's detail.
  */
 function slims_row_detail($elements) {
   $slims_conf = slims_conf();
@@ -513,9 +512,9 @@ function slims_row_detail($elements) {
   $authors = $rows['authors'][1]['data'];
   $_authors = array();
   foreach ($authors as $author) {
-	// $author[0] = l($author[0], 'slims/search/' . str_replace(' ', '+', $author[0]));
-	$author[0] = l($author[0], 'slims/search/' . $author[0]);
-	$_authors[] = implode(' - ', $author);
+    // $author[0] = l($author[0], 'slims/search/' . str_replace(' ', '+', $author[0]));
+    $author[0] = l($author[0], 'slims/search/' . $author[0]);
+    $_authors[] = implode(' - ', $author);
   }
   $rows['authors'][1]['data'] = theme('item_list', array('items' => $_authors));
 
@@ -544,14 +543,14 @@ function slims_row_detail($elements) {
     if ($slims_conf['image_empty_opt'] == 1) {
       $picpath = $slims_conf['server_url'] . 'images/default/image.png';
     }
-    else if ($slims_conf['image_empty_opt'] == 2) {
+    elseif ($slims_conf['image_empty_opt'] == 2) {
       $picpath = $slims_conf['server_url'] . 'images/default/image.png';
       $filetype = pathinfo('image.png', PATHINFO_EXTENSION);
       $image_data = file_get_contents($picpath);
       $picpath = 'data:image/' . $filetype . ';base64,' . base64_encode($image_data);
       $base64 = TRUE;
     }
-    else if ($slims_conf['image_empty_opt'] == 3) {
+    elseif ($slims_conf['image_empty_opt'] == 3) {
       $picpath = drupal_get_path('module', 'slims') . '/default/empty.png';
       $picpath = image_style_path('slims-detail', $path);
     }
@@ -606,9 +605,9 @@ function template_preprocess_slims_single_item(&$variables) {
 
   // Create a renderable array for the title.
   // $variables['title'] = array(
-    // '#type' => 'link',
-    // '#title' => $node->title,
-    // '#href' => 'node/' . $node->nid,
+  //   '#type' => 'link',
+  //   '#title' => $node->title,
+  //   '#href' => 'node/' . $node->nid,
   // );
 
   $variables['title'] = $item['title'];
@@ -622,14 +621,14 @@ function template_preprocess_slims_single_item(&$variables) {
     if ($slims_conf['image_empty_opt'] == 1) {
       $picpath = $slims_conf['server_url'] . 'images/default/image.png';
     }
-    else if ($slims_conf['image_empty_opt'] == 2) {
+    elseif ($slims_conf['image_empty_opt'] == 2) {
       $picpath = $slims_conf['server_url'] . 'images/default/image.png';
       $filetype = pathinfo('image.png', PATHINFO_EXTENSION);
       $image_data = file_get_contents($picpath);
       $picpath = 'data:image/' . $filetype . ';base64,' . base64_encode($image_data);
       $base64 = TRUE;
     }
-    else if ($slims_conf['image_empty_opt'] == 3) {
+    elseif ($slims_conf['image_empty_opt'] == 3) {
       $path = drupal_get_path('module', 'slims') . '/default/empty.png';
       $picpath = image_style_path('slims-thumb', $path);
     }
@@ -655,7 +654,7 @@ function template_preprocess_slims_single_item(&$variables) {
         . $picname
         . '&'
         . http_build_query(_slims_query_image_thumb());
-    } 
+    }
   }
   if ($display_picture) {
     $variables['image'] = theme(($base64) ? 'slims_image64' : 'image', array(
@@ -683,8 +682,7 @@ function _slims_receiver_items($page = 0, $keyword = '', $params = array()) {
   if ($obj) {
     $result = $obj->children('slims', TRUE)->resultInfo;
     if ($result->modsResultShowed > 0) {
-      foreach ($obj->mods as $item)
-      {
+      foreach ($obj->mods as $item) {
         $array = array();
         foreach ($item->name as $names) {
           $array[] = $names->namePart;
@@ -701,7 +699,8 @@ function _slims_receiver_items($page = 0, $keyword = '', $params = array()) {
     $nums = $result->modsResultShowed;
   }
 
-  return array('total' => $total,
+  return array(
+    'total' => $total,
     'nums' => $nums,
     'items' => $items,
     // 'log' => http_build_query($prexmlquery)
@@ -738,7 +737,7 @@ function _slims_receiver_details($id = '') {
       foreach (@$mods->location->holdingSimple->copyInformation as $c) {
         $copies[] = array(
           'items' => $c->numerationAndChronology,
-          'location' => $c->sublocation
+          'location' => $c->sublocation,
         );
       }
     }
@@ -837,7 +836,8 @@ function _slims_query_image_thumb() {
  * Array of XML item's detail query.
  */
 function _slims_query_xml_detail($id) {
-  return array('p' => 'show_detail',
+  return array(
+    'p' => 'show_detail',
     'inXML' => 'true',
     'id' => $id,
   );
@@ -847,7 +847,8 @@ function _slims_query_xml_detail($id) {
  * Array of XML list of items query.
  */
 function _slims_query_xml_items($page = 0, $keywords = '', $params = array()) {
-  $query = array('resultXML' => 'true',
+  $query = array(
+    'resultXML' => 'true',
     'search' => 'Search',
     'gmd' => 0,
     'colltype' => 0,
