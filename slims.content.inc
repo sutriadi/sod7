@@ -6,7 +6,7 @@
  */
 
 /**
- * Show content of search or without search
+ * Show content of search or without search.
  */
 function slims_search($key = '') {
   $slims_conf = slims_conf();
@@ -75,12 +75,12 @@ function slims_search($key = '') {
 
   drupal_set_breadcrumb($breadcrumb);
 
-  drupal_add_css(drupal_get_path('module', 'slims') .'/slims.css');
+  drupal_add_css(drupal_get_path('module', 'slims') . '/slims.css');
   return $render_array;
 }
 
 /**
- * Show content of item details
+ * Show content of item details.
  */
 function slims_item_details($id = '') {
   $slims_conf = slims_conf();
@@ -135,7 +135,7 @@ function slims_item_details($id = '') {
         '#pre_render' => array('slims_row_detail'),
       );
     }
-    
+
   }
 
   return $render_array;

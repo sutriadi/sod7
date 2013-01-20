@@ -1,7 +1,6 @@
 name = SLiMS
 description = A module for SLiMS.
 package = SLiMS
-files[] = slims.module
 
 configure = admin/config/slims
 core = "7.x"

@@ -1,3 +1,11 @@
+<?php
+/**
+ * @file
+ * Template file for slims single item.
+ *
+ */
+?>
+
 <div class="<?php print $classes; ?>">
   <div class="image"><?php print $image;?></div>
   <h3 class="title"><?php print render($title); ?></h3>
