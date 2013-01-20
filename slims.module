@@ -6,7 +6,8 @@
  */
 
 /**
- * Helper function to generate the configuration array used to server settings of SLiMS.
+ * Helper function to generate the configuration array used to server
+ * settings of SLiMS.
  */
 function slims_conf() {
   $_p = 'slims';
@@ -395,7 +396,6 @@ function slims_advanced_search_block_submit($form, &$form_state) {
   unset($query['form_id']);
   unset($query['form_token']);
   unset($query['op']);
-  // global $form_state;
   drupal_goto('slims/advanced/', array('query' => $query));
 }
 
@@ -488,7 +488,7 @@ function theme_slims_image64($variables) {
  * Render each element of items.
  */
 function slims_item_list_child_render($elements) {
-  foreach (array_keys($elements['#items']) AS $key) {
+  foreach (array_keys($elements['#items']) as $key) {
     // Take the renderable array that we set in
     // single_blog_block_view() and render it into the string
     // that theme_item_list() expects.
@@ -512,7 +512,6 @@ function slims_row_detail($elements) {
   $authors = $rows['authors'][1]['data'];
   $_authors = array();
   foreach ($authors as $author) {
-    // $author[0] = l($author[0], 'slims/search/' . str_replace(' ', '+', $author[0]));
     $author[0] = l($author[0], 'slims/search/' . $author[0]);
     $_authors[] = implode(' - ', $author);
   }
@@ -576,7 +575,7 @@ function slims_row_detail($elements) {
         . $picname
         . '&'
         . http_build_query(_slims_query_image_detail());
-    } 
+    }
   }
   if ($display_picture) {
     $rows['image'][1]['data'] = theme(($base64) ? 'slims_image64' : 'image', array(
@@ -605,9 +604,9 @@ function template_preprocess_slims_single_item(&$variables) {
 
   // Create a renderable array for the title.
   // $variables['title'] = array(
-  //   '#type' => 'link',
-  //   '#title' => $node->title,
-  //   '#href' => 'node/' . $node->nid,
+  // ~  '#type' => 'link',
+  // ~  '#title' => $node->title,
+  // ~  '#href' => 'node/' . $node->nid,
   // );
 
   $variables['title'] = $item['title'];
