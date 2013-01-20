@@ -6,7 +6,7 @@
  */
 
 /**
- * Settings for SLiMS server parameters
+ * Settings for SLiMS server parameters.
  */
 function slims_server_settings() {
   $slims_conf = slims_conf();
@@ -36,7 +36,7 @@ function slims_server_settings() {
 }
 
 /**
- * Settings for picture
+ * Settings for picture.
  */
 function slims_picture_settings() {
   $slims_conf = slims_conf();
@@ -98,18 +98,18 @@ function slims_picture_settings() {
   );
   $form['actions'] = array('#type' => 'actions');
   $form['actions']['submit'] = array(
-    '#type' => 'submit', 
+    '#type' => 'submit',
     '#value' => t('Save configuration'),
   );
   return $form;
 }
 
 /**
- * Form submission handle for slims_picture_settings()
+ * Form submission handle for slims_picture_settings().
  */
 function slims_picture_settings_submit($form, &$form_state) {
   $_p = 'slims';
-  
+
   $slims_thumb = image_style_load('slims-thumb');
   $x = 0;
   foreach ($slims_thumb['effects'] as $effect) {
@@ -151,12 +151,12 @@ function slims_picture_settings_submit($form, &$form_state) {
   $path = drupal_get_path('module', 'slims') . '/default/empty.png';
   $picpath = image_style_path('slims-detail', $path);
   image_style_create_derivative(image_style_load('slims-detail'), $path, $picpath);
-  
+
   system_settings_form_submit($form, $form_state);
 }
 
 /**
- * Pictures import tool
+ * Pictures import tool.
  */
 function slims_pictures_tool() {
   $slims_conf = slims_conf();
@@ -170,14 +170,14 @@ function slims_pictures_tool() {
 }
 
 /**
- * Settings for widget
+ * Settings for widget.
  */
 function slims_widget_settings() {
   $slims_conf = slims_conf();
   $_p = 'slims';
-  
+
   $form['search'] = slims_search_form_configure();
   $form['list'] = slims_list_form_configure();
-  
+
   return system_settings_form($form);
 }
