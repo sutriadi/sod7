@@ -6,8 +6,7 @@
  */
 
 /**
- * Helper function to generate the configuration array used to server
- * settings of SLiMS.
+ * Helper function to generate array used to server settings of SLiMS.
  */
 function slims_conf() {
   $_p = 'slims';
@@ -601,14 +600,6 @@ function template_preprocess_slims_single_item(&$variables) {
   $_p = 'slims';
 
   $item = $variables['items'];
-
-  // Create a renderable array for the title.
-  // $variables['title'] = array(
-  // ~  '#type' => 'link',
-  // ~  '#title' => $node->title,
-  // ~  '#href' => 'node/' . $node->nid,
-  // );
-
   $variables['title'] = $item['title'];
   $variables['authors'] = $item['authors'];
 
