@@ -5,6 +5,13 @@ function slims_search($key = '') {
   
   $page = isset($_GET['page']) ? $_GET['page'] : 0;
   
+  $params = array(
+    'title' => isset($_GET['title']) ? $_GET['title'] : '',
+    'author' => isset($_GET['author']) ? $_GET['author'] : '',
+    'subject' => isset($_GET['subject']) ? $_GET['subject'] : '',
+    'isbn' => isset($_GET['isbn']) ? $_GET['isbn'] : '',
+  );
+  
   $breadcrumb = array();
   $breadcrumb[] = l(t('Home'), '<front>');
     
@@ -12,7 +19,7 @@ function slims_search($key = '') {
     '#markup' => '<h3>' . $slims_conf['server_subtitle'] . '</h3>'
   );
   
-  $data = _slims_receiver_items($page, $key);
+  $data = _slims_receiver_items($page, $key, $params);
   
   if ($data['total'] != 0 AND $data['nums'] != 0)
   {
