@@ -130,7 +130,7 @@ function slims_item_details($id = '') {
       }
       $render_array['slims_detail_table'] = array(
         '#theme' => 'table',
-        // ~ '#header' => $header,
+        // '#header' => $header,
         '#rows' => $rows,
         '#pre_render' => array('slims_row_detail'),
       );

@@ -2,7 +2,6 @@
 /**
  * @file
  * Template file for slims single item.
- *
  */
 ?>
 
