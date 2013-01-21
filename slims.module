@@ -190,6 +190,8 @@ function slims_block_info() {
  * Implements hook_block_view().
  */
 function slims_block_view($delta = '') {
+  $block = array();
+
   if ($delta == 'form') {
     if (user_access('search slims')) {
       $block['subject'] = t('SLiMS Simple Search');
