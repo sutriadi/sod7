@@ -216,7 +216,7 @@ function slims_block_view($delta = '') {
  */
 function slims_block_configure($delta = '') {
   $form = array();
-  if ($delta == 'form') {
+  if ($delta == 'form' || $delta == 'advanced') {
     $form = slims_search_form_configure();
   }
   elseif ($delta == 'list') {

@@ -35,9 +35,9 @@ function slims_search($key = '') {
     $offset = ($page) * $data['nums'];
     $last = ($offset + $data['nums'] < $data['total'])? $offset + $data['nums'] : $data['total'];
   }
-  else {
+  elseif ( ! empty($key)) {
     $render_array['slims_empty_search'] = array(
-      '#markup' => '<h3>' . t('Search result with keywords: !key has empty', array('!key' => "<em>$key</em>")) . '</h3>',
+      '#markup' => '<h3>' . t('Search result with keywords: @key has empty', array('@key' => "<em>$key</em>")) . '</h3>',
     );
   }
 
