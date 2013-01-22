@@ -427,7 +427,8 @@ function slims_list_block() {
     );
   }
 
-  if (!empty($items)) {
+  $render_array = array();
+  if ( ! empty($items)) {
     $render_array['slims_list'] = array(
       '#theme' => 'slims_div_items',
       '#items' => $items,
