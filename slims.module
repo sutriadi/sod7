@@ -6,6 +6,17 @@
  */
 
 /**
+* Implements hook_help().
+*/
+function slims_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#slims':
+      // Return a line-break version of the module README.txt
+      return filter_filter('process', 1, NULL, file_get_contents( dirname(__FILE__) . "/README.txt") );
+  }
+}
+
+/**
  * Helper function to generate array used to server settings of SLiMS.
  */
 function slims_conf() {

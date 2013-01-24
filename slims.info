@@ -1,6 +1,7 @@
 name = SLiMS
 description = A module for SLiMS.
 package = SLiMS
+dependencies[] = image
 
 configure = admin/config/slims
 core = "7.x"
